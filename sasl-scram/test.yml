@@ -1,0 +1,41 @@
+---
+version: '3.8'
+services:
+  zookeeper-1:
+    image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper-1
+    container_name: zookeeper-1
+    ports:
+      - "22181:22181"
+      - "21171:21171"
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 22181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+#      ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: "DEBUG"
+      ZOOKEEPER_SERVERS: zookeeper-1:22888:23888;zookeeper-2:32888:33888;zookeeper-3:42888:43888
+      EXTRA_ARGS: -javaagent:/etc/kafka/secrets/jmx_prometheus_javaagent-0.20.0.jar=21171:/etc/kafka/secrets/jmx.zookeeper.yml
+      KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/secrets/zookeeper_server_jaas.conf
+        -Dquorum.auth.enableSasl=true
+        -Dquorum.auth.learnerRequireSasl=true
+        -Dquorum.auth.serverRequireSasl=true
+        -Dquorum.cnxn.threads.size=20
+        -Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
+        -Dzookeeper.authProvider.2=org.apache.zookeeper.server.auth.DigestAuthenticationProvider
+        -DjaasLoginRenew=3600000
+        -DrequireClientAuthScheme=sasl
+        -Dquorum.auth.learner.loginContext=QuorumLearner
+        -Dquorum.auth.server.loginContext=QuorumServer
+    networks:
+      - kafka-cluster-network
+    volumes:
+      - ${KAFKA_SASL_SCRAM_SECRETS_DIR}/zookeeper_server_jaas.conf:/etc/kafka/secrets/zookeeper_server_jaas.conf
+      - ${KAFKA_SASL_SCRAM_SECRETS_DIR}/jmx.zookeeper.yml:/etc/kafka/secrets/jmx.zookeeper.yml
+      - ${KAFKA_SASL_SCRAM_SECRETS_DIR}/jmx_prometheus_javaagent-0.20.0.jar:/etc/kafka/secrets/jmx_prometheus_javaagent-0.20.0.jar
+
+networks:
+  kafka-cluster-network:
+    driver: bridge
+    name: kafka-cluster-network

@@ -1,0 +1,11 @@
+# jmx-exporter/kafka-broker-health.yml
+startDelaySeconds: 30
+lowercaseOutputName: true
+lowercaseOutputLabelNames: true
+rules:
+  # Broker state: 1 = RUNNING, 0 = not running
+  - pattern: kafka.server<type=KafkaServer,name=BrokerState><>Value
+    name: kafka_broker_up
+    type: GAUGE
+    labels:
+      broker: "$1"
